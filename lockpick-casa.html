@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiveM Lockpick Trainer - Casa</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #121214;
+            color: #e1e1e6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Botão Minimalista para Voltar ao Index */
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #18181b;
+            color: #a1a1aa;
+            border: 1px solid #27272a;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .back-btn:hover {
+            background: #27272a;
+            color: #ffffff;
+            border-color: #3f3f46;
+            transform: translateX(-2px);
+        }
+
+        .back-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* HUD & Painel de Controlo */
+        .hud {
+            background: rgba(24, 24, 27, 0.9);
+            border: 1px solid #27272a;
+            padding: 15px 25px;
+            border-radius: 12px;
+            display: flex;
+            gap: 25px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #a1a1aa;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #00f0ff;
+        }
+
+        /* Área do Minigame */
+        .game-wrapper {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(18, 18, 20, 0.6);
+            border-radius: 50%;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Silhueta central com barra que enche */
+        .keyhole-center {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .keyhole-svg {
+            position: absolute;
+            width: 55px;
+            height: 55px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.6));
+            z-index: 2;
+        }
+
+        .progress-bar-bg {
+            position: absolute;
+            width: 24px;
+            height: 50px;
+            background: #27272a;
+            border-radius: 3px;
+            overflow: hidden;
+            bottom: 18px;
+            z-index: 1;
+            border: 1px solid #3f3f46;
+        }
+
+        .progress-bar-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 20%;
+            background: #00e676;
+            transition: height 0.1s linear;
+        }
+
+        /* Caixa preta central (Dropbox style) */
+        #dropbox-msg {
+            position: absolute;
+            width: 240px;
+            background: rgba(18, 18, 20, 0.95);
+            border: 2px solid #27272a;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 20;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #dropbox-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #dropbox-sub {
+            font-size: 12px;
+            color: #a1a1aa;
+        }
+
+        .controls-hint {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #a1a1aa;
+            background: #18181b;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid #27272a;
+        }
+
+        .key-badge {
+            background: #27272a;
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            border-bottom: 2px solid #52525b;
+        }
+
+        .settings-panel {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: #18181b;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid #27272a;
+        }
+
+        select {
+            background: #27272a;
+            color: #fff;
+            border: 1px solid #3f3f46;
+            padding: 5px 10px;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Botão de Voltar ao Index -->
+    <a href="index.html" class="back-btn" title="Voltar ao Menu">
+        <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        <span>Menu</span>
+    </a>
+
+    <div class="container">
+        <!-- HUD Estatísticas -->
+        <div class="hud">
+            <div class="stat-item">
+                <div class="stat-label">Progresso</div>
+                <div class="stat-value" id="progress-display">20%</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Sequência</div>
+                <div class="stat-value" id="streak-display">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Precisão</div>
+                <div class="stat-value" id="accuracy-display">100%</div>
+            </div>
+        </div>
+
+        <!-- Área do Minigame -->
+        <div class="game-wrapper" id="game-box">
+            <!-- Box preta central tipo Dropbox -->
+            <div id="dropbox-msg">
+                <div id="dropbox-title"></div>
+                <div id="dropbox-sub">Pressiona <span class="key-badge">R</span> para continuar</div>
+            </div>
+            
+            <div class="keyhole-center">
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" id="progress-fill"></div>
+                </div>
+
+                <svg class="keyhole-svg" viewBox="0 0 24 24">
+                    <path d="M9 3h6v9.2a3.5 3.5 0 0 1 1.5 2.8v1.5a3.5 3.5 0 1 1-3 0v-1.5c0-1 .4-1.9 1-2.5V5h-4v4.7c.6.6 1 1.5 1 2.5v1.5a3.5 3.5 0 1 1-3 0v-1.5c0-1 .4-1.9 1-2.5V3z" fill="#3f3f46"/>
+                </svg>
+            </div>
+
+            <canvas id="lockCanvas" width="320" height="320"></canvas>
+        </div>
+
+        <!-- Seletor de Velocidade -->
+        <div class="settings-panel">
+            <label for="speed-select" style="font-size: 13px; color: #a1a1aa;">Dificuldade:</label>
+            <select id="speed-select">
+                <option value="easy">Lenta</option>
+                <option value="normal" selected>Normal</option>
+                <option value="hard">Rápida</option>
+                <option value="extreme">Muito Rápida / Extrema</option>
+            </select>
+        </div>
+
+        <!-- Dica de Tecla -->
+        <div class="controls-hint">
+            Usa <span class="key-badge">E</span> para interagir e <span class="key-badge">R</span> para reiniciar quando acabar!
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('lockCanvas');
+        const ctx = canvas.getContext('2d');
+        const progressDisplay = document.getElementById('progress-display');
+        const progressFill = document.getElementById('progress-fill');
+        const streakDisplay = document.getElementById('streak-display');
+        const accuracyDisplay = document.getElementById('accuracy-display');
+        const speedSelect = document.getElementById('speed-select');
+        const dropboxMsg = document.getElementById('dropbox-msg');
+        const dropboxTitle = document.getElementById('dropbox-title');
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = 120;
+
+        let pointerAngle = 0; 
+        let ringAngle = 0;    
+        let pointerSpeed = 0.038; 
+        let ringSpeed = 0.012;    
+
+        let progressValue = 20; 
+        let streak = 0;
+        let totalAttempts = 0;
+        let successfulAttempts = 0;
+        let isGameOver = false;
+
+        let zones = [];
+
+        function setDifficulty(level) {
+            switch(level) {
+                case 'easy': pointerSpeed = 0.025; ringSpeed = 0.007; break;
+                case 'normal': pointerSpeed = 0.038; ringSpeed = 0.012; break;
+                case 'hard': pointerSpeed = 0.055; ringSpeed = 0.018; break;
+                case 'extreme': pointerSpeed = 0.075; ringSpeed = 0.025; break;
+            }
+        }
+
+        speedSelect.addEventListener('change', (e) => {
+            setDifficulty(e.target.value);
+            resetGame();
+        });
+
+        function generateNewStage() {
+            zones = [];
+            const totalBlocks = 6; 
+            const slotSize = 360 / totalBlocks; 
+            const blockSpan = 14;
+
+            let types = Math.random() < 0.5 
+                ? ['green', 'red', 'green', 'red', 'green', 'red'] 
+                : ['red', 'green', 'red', 'green', 'red', 'green'];
+
+            let rotationShift = Math.floor(Math.random() * totalBlocks);
+            for (let i = 0; i < rotationShift; i++) {
+                types.push(types.shift());
+            }
+
+            for (let i = 0; i < totalBlocks; i++) {
+                const startDeg = i * slotSize + (slotSize - blockSpan) / 2;
+                zones.push({
+                    start: startDeg,
+                    end: startDeg + blockSpan,
+                    type: types[i]
+                });
+            }
+        }
+
+        function triggerDropbox(text, color) {
+            dropboxTitle.innerText = text;
+            dropboxTitle.style.color = color;
+            dropboxMsg.style.display = 'flex';
+            isGameOver = true;
+        }
+
+        function hideDropbox() {
+            dropboxMsg.style.display = 'none';
+        }
+
+        function updateStats() {
+            progressDisplay.innerText = Math.round(progressValue) + '%';
+            progressFill.style.height = progressValue + '%';
+            streakDisplay.innerText = streak;
+            const acc = totalAttempts === 0 ? 100 : Math.round((successfulAttempts / totalAttempts) * 100);
+            accuracyDisplay.innerText = acc + '%';
+        }
+
+        function normalizeDeg(deg) {
+            deg = deg % 360;
+            if (deg < 0) deg += 360;
+            return deg;
+        }
+
+        function resetGame() {
+            progressValue = 20;
+            hideDropbox();
+            generateNewStage();
+            updateStats();
+            isGameOver = false;
+        }
+
+        function checkAttempt() {
+            if (isGameOver) return;
+
+            totalAttempts++;
+
+            let pointerDeg = normalizeDeg((pointerAngle * (180 / Math.PI)) - 90);
+            let ringDeg = normalizeDeg(ringAngle * (180 / Math.PI));
+
+            let relativeDeg = normalizeDeg(pointerDeg - ringDeg);
+
+            let hit = false;
+            let hitType = 'none';
+
+            for (let zone of zones) {
+                let zStart = normalizeDeg(zone.start);
+                let zEnd = normalizeDeg(zone.end);
+
+                let inZone = false;
+                if (zStart < zEnd) {
+                    inZone = relativeDeg >= zStart && relativeDeg <= zEnd;
+                } else {
+                    inZone = relativeDeg >= zStart || relativeDeg <= zEnd;
+                }
+
+                if (inZone) {
+                    hit = true;
+                    hitType = zone.type;
+                    break;
+                }
+            }
+
+            if (hit && hitType === 'green') {
+                successfulAttempts++;
+                progressValue += 20; 
+                
+                if (progressValue >= 100) {
+                    progressValue = 100;
+                    streak++;
+                    triggerDropbox('LOCK PICKED!', '#00e676');
+                }
+            } else {
+                progressValue -= 15;
+                if (progressValue <= 0) {
+                    progressValue = 0;
+                    streak = 0;
+                    triggerDropbox('LOCK BROKEN!', '#ff1744');
+                }
+            }
+
+            updateStats();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyE') {
+                checkAttempt();
+            } else if (e.code === 'KeyR' && isGameOver) {
+                resetGame();
+            }
+        });
+
+        canvas.addEventListener('click', () => {
+            if (isGameOver) {
+                resetGame();
+            } else {
+                checkAttempt();
+            }
+        });
+
+        function animate() {
+            if (!isGameOver) {
+                pointerAngle += pointerSpeed;
+                ringAngle += ringSpeed;
+
+                if (progressValue > 0) {
+                    progressValue -= 0.03; 
+                    if (progressValue <= 0) {
+                        progressValue = 0;
+                        streak = 0;
+                        triggerDropbox('LOCK BROKEN!', '#ff1744');
+                    }
+                    updateStats();
+                }
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(ringAngle);
+
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.strokeStyle = '#1b4332';
+            ctx.lineWidth = 6;
+            ctx.stroke();
+
+            zones.forEach(zone => {
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, zone.start * (Math.PI / 180), zone.end * (Math.PI / 180));
+                ctx.strokeStyle = zone.type === 'green' ? '#00e676' : '#ff1744';
+                ctx.lineWidth = 6;
+                ctx.stroke();
+            });
+
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(pointerAngle);
+
+            ctx.beginPath();
+            ctx.moveTo(0, -radius - 12);
+            ctx.lineTo(-6, -radius + 4);
+            ctx.lineTo(6, -radius + 4);
+            ctx.closePath();
+            ctx.fillStyle = '#00e676';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(0, -radius + 4);
+            ctx.lineTo(0, -radius + 18);
+            ctx.strokeStyle = '#00e676';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.restore();
+
+            requestAnimationFrame(animate);
+        }
+
+        setDifficulty('normal');
+        generateNewStage();
+        updateStats();
+        animate();
+    </script>
+</body>
+</html>
